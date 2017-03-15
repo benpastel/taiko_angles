@@ -1,12 +1,18 @@
-
 library(seewave)
 library(tuneR)
 
 RATE = 44100
-LEN_SECONDS = 0.39 # max length of each audio clip in seconds.  This was chosen
-# to get a reasonable sustain measurement on all drums, while only
-# needing to throw away 4 data points for being to short.
+LEN_SECONDS = 0.39 # max length of each audio clip in seconds.
 LEN_SAMPLES = LEN_SECONDS * RATE
+N = 384 - 11
+
+# spectrogram bands [0, C_3, C_4, C_5, 100]
+# define: 
+#   "low" as below C_3, 
+#   "med" as C_3 to C_4 (middle C),
+#   "high" as above C_4
+MIDDLE_C = 261.63 / 1000 # kHz
+BANDS = c(0, MIDDLE_C / 2, MIDDLE_C, 1000)
 
 periods = data.frame(rbind(
     c("kato", "attack", 0.05, 0.11),
@@ -24,6 +30,7 @@ periods$end = as.numeric(periods$end) * RATE
 
 players = drums = woods = angles = volumes = NULL # indices
 extremes = attacks = sustains = decays = NULL # amplitude envelope features
+lows = meds = highs = NULL # spectrogram features
 row = 1
 for (p in c("player1", "player2", "player3", "player4")) {
     for (d in c("kato", "maui", "practice")) {
@@ -44,7 +51,7 @@ for (p in c("player1", "player2", "player3", "player4")) {
 
                     # find the amplitude envelope features
                     wave = readWave(path, to=LEN_SAMPLES)
-                    envelope = env(wave)
+                    envelope = env(wave, plot=F)
                     extremes[row] = quantile(envelope, 0.98)[[1]]
 
                     envelope_mean <- function(for_type) {
@@ -56,17 +63,19 @@ for (p in c("player1", "player2", "player3", "player4")) {
                     sustains[row] = envelope_mean("sustain")
                     decays[row] = envelope_mean("decay")
 
+                    ratios = fbands(spec(wave, plot=F), bands=BANDS, plot=F)[,2]
+                    stopifnot(length(ratios) == 3)
+
+                    lows[row] = ratios[1]
+                    meds[row] = ratios[2]
+                    highs[row] = ratios[3]
+
                     row <- row + 1
                 }
             }
         }
     }
 }
-auds$Players <- as.factor(players)
-auds$Drums <- as.factor(drums)
-auds$Woods <- as.factor(woods)
-auds$Angles <- as.factor(angles)
-auds$Volumes <- as.factor(volumes)
 
 # Control for extremes separately for each drum
 # Use angles == 2 as the reference
@@ -77,13 +86,14 @@ angle_1 = ifelse(angles == "1", 1, 0)
 angle_3 = ifelse(angles == "3", 1, 0)
 angle_4 = ifelse(angles == "4", 1, 0)
 
-# TODO: upgrade these to pictures!!
+# TODO: upgrade these to pictures??
 # print("Extremes vs angles:")
 # model <- lm(extremes ~ angle_1 + angle_3 + angle_4)
 # print(summary(model))
 
-# print("Attack envelope magnitude, no controls:")
-# model <- lm(attacks ~ angle_1 + angle_3 + angle_4)
+# print("Attack envelope magnitude, basic controls only:")
+# model <- lm(attacks ~ angle_1 + angle_3 + angle_4
+#        + is_kato + is_maui + is_practice - 1)
 # print(summary(model))
 
 # print("Sustain envelope magnitude, no controls:")
@@ -95,24 +105,38 @@ angle_4 = ifelse(angles == "4", 1, 0)
 # print(summary(model))
  
 print("Attack envelope magnitude, controlling for volume:")
-model <- lm(attacks ~ is_kato : poly(extremes, 3) 
-                    + is_maui : poly(extremes, 3) 
-                    + is_practice : poly(extremes, 3)
-                    + angle_1 + angle_3 + angle_4)
+model <- lm(attacks ~ drums + drums : poly(extremes, 3) 
+                    + angle_1 + angle_3 + angle_4 - 1)
 print(summary(model))
  
 print("Sustain envelope magnitude, controlling for volume:")
-model <- lm(sustains ~ is_kato : poly(extremes, 3) 
-                    + is_maui : poly(extremes, 3) 
-                    + is_practice : poly(extremes, 3)
-                    + angle_1 + angle_3 + angle_4)
+model <- lm(sustains ~ drums + drums : poly(extremes, 3) 
+                    + angle_1 + angle_3 + angle_4 - 1)
 print(summary(model))
 
 print("Decay envelope magnitude, controlling for volume:")
-model <- lm(decays ~ is_kato : poly(extremes, 3) 
-                    + is_maui : poly(extremes, 3) 
-                    + is_practice : poly(extremes, 3)
-                    + angle_1 + angle_3 + angle_4)
+model <- lm(decays ~ drums + drums : poly(extremes, 3) 
+                    + angle_1 + angle_3 + angle_4 - 1)
 print(summary(model))
 
+print("Lows by angle:")
+model <- lm(lows ~ drums + drums : poly(extremes, 3) 
+    + angle_1 + angle_3 + angle_4 - 1)
+print(summary(model))
+
+print("Mediums by angle:")
+model <- lm(meds ~ drums + drums : poly(extremes, 3) 
+    + angle_1 + angle_3 + angle_4 - 1)
+print(summary(model))
+
+print("Highs by angle:")
+model <- lm(highs ~ drums + drums : poly(extremes, 3) 
+    + angle_1 + angle_3 + angle_4 - 1)
+print(summary(model))
+
+# presumably suppresses everything except the mid-range
+print("Zoom in on mediums for angle 4:")
+model <- lm(meds ~ drums + drums : poly(extremes, 3) 
+    + drums:angle_4 - 1)
+print(summary(model))
 
