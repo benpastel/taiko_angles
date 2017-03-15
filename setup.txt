@@ -1,0 +1,55 @@
+- x is beneath the centerpoint of each drum
+- stand is set at -15, 0, 15, 30 degrees
+- player location will be set so that -15 is just barely in range (~2 inches off the drum rim)
+
+roles:
+benji record
+2 people set drum
+1 person phone record
+1 person play
+
+player 1 (Thi)
+practice_oak_2_1_4_3
+practice_hou_1_3_4_2 *** 1d has slap
+maui_oak_3_2_1_4
+maui_hou_1_2_4_3 
+kato_oak_2_4_1_3  *** actually 2_4_3_1 ... 1 has slap
+kato_hou_2_1_3_4
+
+player 2 (Zach)
+practice_hou_4_2_1_3 *** switched from plan
+practice_oak_2_3_1_4
+maui_oak_1_2_3_4
+maui_hou_4_1_2_3
+kato_oak_3_2_4_1
+kato_hou_3_4_2_1
+
+player 3 (Hannah)
+practice_oak_1_4_3_2
+practice_hou_2_3_4_1
+maui_oak_3_1_2_4
+maui_hou_1_3_2_4
+kato_oak_2_4_3_1
+kato_hou_4_2_3_1
+
+player 4 (Mark)
+practice_oak_4_3_1_2
+practice_hou_4_1_3_2
+maui_oak_4_3_2_1
+maui_hou_3_1_4_2
+kato_oak_1_4_2_3
+kato_hou_3_4_1_2
+
+# EXCLUDE LIST
+player1_kato_oak_1d             slap
+player1_practice_maple_1d       slap
+player1_maui_oak_2a.m4a         inaudibly soft
+player1_practice_oak_3a.m4a     inaudibly soft
+player1_practice_maple_2a.m4a   inaudibly soft
+player4_practice_maple_3a.m4a   inaudibly soft
+player4_practice_maple_4a.m4a   inaudibly soft
+player2_kato_oak_1d.m4a         too short
+player2_kato_maple_3d.m4a       too short
+player1_maui_oak_3d.m4a         too short
+player1_maui_maple_4d.m4a       too short
+
